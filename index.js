@@ -9,13 +9,16 @@ const apiConfig = {
 };
 
 
-
 Vue.component('input-span', {
 	props: ["day", "time"],
 	template: `
 		<span v-if="time in day.bookings" @dblclick="send_changes">{{ day.bookings[time] }}</span>
 		<input v-else @keypress.enter='send_changes_next' @blur='send_changes' ref="input" type="text" class="form-control p-0 text-center bg-transparent" />
-  `,
+  	`, data: () => {
+		return {
+			last_sent: moment()
+		}
+	},
 	methods: {
 		send_changes_next(event) {
 			let day_inputs = $(`#day-${this.day.day.date()} input`);
@@ -24,7 +27,10 @@ Vue.component('input-span', {
 			this.send_changes(event);
 		},
 		send_changes(event) {
-			this.$emit("send_changes", event.target.value || "", this.day, this.time);
+			if (moment().diff(this.last_sent) > 500) {
+				this.$emit("send_changes", event.target.value || "", this.day, this.time);
+				this.last_sent = moment();
+			}
 		}
 	}
 });
@@ -157,7 +163,6 @@ var app = new Vue({
 				var request = this.sheet_api.values.get(params);
 
 				request = request.then(response => {
-					console.log(response.result.values);
 					return response.result.values;
 				});
 
@@ -194,18 +199,11 @@ var app = new Vue({
 			//     console.log(response.result);
 			// });
 		},
-		add_booking: function (value, day, time) {
-			if (value)
-				this.$set(day.bookings, time, value);
-			else
-				this.$delete(day.bookings, time);
-			this.update_sheet(value, day, time);
-		},
-		update_sheet: function (value, day, time) {
+		send_booking: function (value, day, time) {
 			let row = this.times.indexOf(time) + day.month.row;
 			let col = day.month.col + day.day.date() - 1;
 
-			a = gapi.client.sheets.spreadsheets.values
+			gapi.client.sheets.spreadsheets.values
 				.update({
 					spreadsheetId: this.sheet_id,
 					range: `${rowcol_to_a1(row, col)}:${rowcol_to_a1(row + 1, col)}`,
@@ -216,11 +214,20 @@ var app = new Vue({
 						]
 					}
 				})
-				.then(function (reason) {
-					console.log('ok: ', reason);
-				}, function (reason) {
-					console.error('error: ' + reason.result.error.message);
-					alert("ERROR UPDATING")
+				.then(() => {
+					if (value)
+						this.$set(day.bookings, time, value);
+					else
+						this.$delete(day.bookings, time);
+				}, (reason) => {
+					$.notify({
+						title: 'Error updating sheet:<br />',
+						message: reason.result.error.message
+					}, {
+						type: 'danger',
+						delay: 2000,
+						timer: 500
+					});
 				});
 		},
 	},
@@ -228,13 +235,19 @@ var app = new Vue({
 		gapi.load("client:auth2", {
 			callback: () => {
 				gapi.client.init(apiConfig).then(() => {
-					let authInstance = gapi.auth2.getAuthInstance();
-					authInstance.isSignedIn.listen(this.init);
+					try {
+						let authInstance = gapi.auth2.getAuthInstance();
+						authInstance.isSignedIn.listen(this.init);
 
-					if (authInstance.isSignedIn.get())
-						this.init();
-					else
-						authInstance.signIn();
+						if (authInstance.isSignedIn.get())
+							this.init();
+						else {
+							authInstance.signIn();
+						}
+					}
+					catch (e) {
+						console.log(e);
+					}
 				});
 			},
 			onerror: function () {
