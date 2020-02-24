@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="style.css">
+	<title>Piano Room Booking</title>
+</head>
+
+<body>
+	<div id="vue-app">
+		<div class="container text-center my-3">
+			<div class="row justify-content-center">
+				<div v-for="(id, tag) in sheet_ids" class="col-3">
+					<button @click="change_room(tag)" class="btn btn-block btn-secondary text-uppercase"
+						:class="[sheet_tag == tag ? 'font-weight-bold' : '', sheet_tag == tag ? 'active' : '']">{{ tag }}</button>
+				</div>
+			</div>
+		</div>
+
+
+		<table id="table" class="container text-center mb-5">
+			<thead>
+				<tr class="row justify-content-center border-bottom">
+					<th class="col-4">Date</th>
+					<th class="col-4">Aujourd'hui ({{ today.day.format("DD.MM") }})</th>
+					<th class="col-4">Demain ({{ tomorrow.day.format("DD.MM") }})</th>
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr v-for="(time, idt) in times" class="row border-bottom justify-content-center">
+					<td class="col-4">
+						<span>{{ time }}</span>
+					</td>
+					<td :id="'day-' + day.day.date()" v-for="(day, idd) in days" class="col-4">
+						<input-span @send_changes="add_booking" :day="day" :time="time"></input-span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
+	<script src="https://apis.google.com/js/api.js"></script>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="index.js"></script>
+</body>
+
+</html>

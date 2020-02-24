@@ -1,0 +1,19 @@
+body {
+    font: "Helvetica Neue";
+}
+
+tr.row:nth-of-type(odd) {
+    background-color: #f9f9f9;
+}
+
+tr.row:hover {
+    background-color: gainsboro;
+}
+
+.row {
+    font-size: 0.7rem;
+}
+
+input.form-control {
+    font-size: 0.7rem;
+}
