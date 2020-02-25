@@ -16,7 +16,7 @@
 	<div id="vue-app">
 		<div class="container text-center my-3">
 			<div class="row justify-content-center">
-				<div v-for="(id, tag) in sheet_ids" class="col-3">
+				<div v-for="(id, tag) in sheet_ids" class="col-5 col-md-3">
 					<button @click="change_room(tag)" class="btn btn-block btn-secondary text-uppercase"
 						:class="[sheet_tag == tag ? 'font-weight-bold' : '', sheet_tag == tag ? 'active' : '']">{{ tag }}</button>
 				</div>
