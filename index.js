@@ -12,8 +12,8 @@ const apiConfig = {
 Vue.component('input-span', {
 	props: ["day", "time"],
 	template: `
-		<span v-if="(time in day.bookings) && !edit_mode" @dblclick="to_edit_mode">{{ value }}</span>
-		<input v-else @keypress.enter='send_changes_next' @blur='send_changes' ref="input" type="text" :value="value" class="form-control p-0 text-center bg-transparent" />
+		<span v-if="(time in day.bookings) && !edit_mode" @dblclick="to_edit_mode">{{ day.bookings[this.time] }}</span>
+		<input v-else @keypress.enter='send_changes_next' @blur='send_changes' ref="input" type="text" class="form-control p-0 text-center bg-transparent" />
 	`,
 	data: function () {
 		return {
@@ -21,15 +21,11 @@ Vue.component('input-span', {
 			edit_mode: false
 		}
 	},
-	computed: {
-		value: function () {
-			return (this.time in this.day.bookings) ? this.day.bookings[this.time] : "";
-		}
-	},
 	methods: {
 		to_edit_mode() {
 			this.edit_mode = true;
 			this.$nextTick(() => {
+				$(this.$refs.input).val(this.day.bookings[this.time]);
 				$(this.$refs.input).focus();
 			});
 		},
@@ -241,6 +237,11 @@ var app = new Vue({
 			let row = this.times.indexOf(time) + day.month.row;
 			let col = day.month.col + day.day.date() - 1;
 
+			if (value)
+				this.$set(day.bookings, time, value);
+			else
+				this.$delete(day.bookings, time);
+
 			gapi.client.sheets.spreadsheets.values
 				.update({
 					spreadsheetId: this.sheet_id,
@@ -252,12 +253,7 @@ var app = new Vue({
 						]
 					}
 				})
-				.then(() => {
-					if (value)
-						this.$set(day.bookings, time, value);
-					else
-						this.$delete(day.bookings, time);
-				}, (reason) => {
+				.then(() => {}, (reason) => {
 					$.notify({
 						title: 'Error updating sheet:<br />',
 						message: reason.result.error.message
@@ -266,6 +262,8 @@ var app = new Vue({
 						delay: 2000,
 						timer: 500
 					});
+
+					this.update_days();
 				});
 		},
 	},
