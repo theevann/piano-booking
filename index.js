@@ -70,7 +70,7 @@ var app = new Vue({
 	methods: {
 		get_month_name: function (day) {
 			return this.sheet_tag == "ce" ? " Février 2020" : "Fevrier 2020";
-			return capitalize(day.format(" MMMM YYYY"));
+			return capitalize(day.format(" MMMM YYYY")); // TODO:
 		},
 		change_room: function (tag) {
 			this.sheet_tag = tag;
@@ -235,24 +235,29 @@ var app = new Vue({
 		gapi.load("client:auth2", {
 			callback: () => {
 				gapi.client.init(apiConfig).then(() => {
-					try {
 						let authInstance = gapi.auth2.getAuthInstance();
 						authInstance.isSignedIn.listen(this.init);
 
 						if (authInstance.isSignedIn.get())
 							this.init();
 						else {
-							authInstance.signIn();
+							authInstance.signIn().catch(function (error) {
+								$.notify({
+									title: 'Error authenticating:<br />',
+									message: error.error + "<br />Please click " +
+										'<button class="m-1 btn btn-danger" onclick="gapi.auth2.getAuthInstance().signIn()">SIGN IN</button>'
+								}, {
+									delay: 0,
+									type: 'danger',
+								});
+							});
+							// authInstance.signIn({ ux_mode: "redirect"}).catch(function (error) { console.log(error); });
 						}
-					}
-					catch (e) {
-						console.log(e);
-					}
 				});
 			},
 			onerror: function () {
 				console.warn('gapi.client failed to load!');
-			}
+			},
 		});
 	}  // End mounted
 });
