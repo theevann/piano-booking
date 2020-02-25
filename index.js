@@ -12,14 +12,27 @@ const apiConfig = {
 Vue.component('input-span', {
 	props: ["day", "time"],
 	template: `
-		<span v-if="time in day.bookings" @dblclick="send_changes">{{ day.bookings[time] }}</span>
-		<input v-else @keypress.enter='send_changes_next' @blur='send_changes' ref="input" type="text" class="form-control p-0 text-center bg-transparent" />
-  	`, data: () => {
+		<span v-if="(time in day.bookings) && !edit_mode" @dblclick="to_edit_mode">{{ value }}</span>
+		<input v-else @keypress.enter='send_changes_next' @blur='send_changes' ref="input" type="text" :value="value" class="form-control p-0 text-center bg-transparent" />
+	`,
+	data: function () {
 		return {
-			last_sent: moment()
+			last_sent: moment(),
+			edit_mode: false
+		}
+	},
+	computed: {
+		value: function () {
+			return (this.time in this.day.bookings) ? this.day.bookings[this.time] : "";
 		}
 	},
 	methods: {
+		to_edit_mode() {
+			this.edit_mode = true;
+			this.$nextTick(() => {
+				$(this.$refs.input).focus();
+			});
+		},
 		send_changes_next(event) {
 			let day_inputs = $(`#day-${this.day.day.date()} input`);
 			let idx = day_inputs.index($(this.$refs.input));
@@ -30,6 +43,7 @@ Vue.component('input-span', {
 			if (moment().diff(this.last_sent) > 500) {
 				this.$emit("send_changes", event.target.value || "", this.day, this.time);
 				this.last_sent = moment();
+				this.edit_mode = false;
 			}
 		}
 	}
@@ -39,6 +53,8 @@ Vue.component('input-span', {
 var app = new Vue({
 	el: "#vue-app",
 	data: {
+		is_signed_in: false,
+		is_month_loaded: false,
 		sheet_ids: {
 			ce: "1i2pVPcG7Qm3Zxn5lSta-uR0-LXXurSZhcc8xhsoF7zA",
 			mxd: "1ANoEagiR88K3e0WVh0lP9sk8inODCuPya9MUNwInpk8",
@@ -77,6 +93,7 @@ var app = new Vue({
 			this.init();
 		},
 		init: function () {
+			this.is_month_loaded = false;
 			let promises = this.days.map((day_info) => {
 				let month_stored_name = this.get_month_name(day_info.day) + " - " + this.sheet_tag;
 				let month = JSON.parse(localStorage.getItem(month_stored_name));
@@ -95,9 +112,9 @@ var app = new Vue({
 			Promise.all(promises)
 				.then(([month_0, month_1]) => {
 					this.times = month_0.times; // TODO
+					this.is_month_loaded = true;
 				})
-				.then(this.update_days);
-
+				.then(this.update_days)
 		},
 		load_month: function (day) {
 			let month_name = this.get_month_name(day);
@@ -145,6 +162,17 @@ var app = new Vue({
 			});
 		},
 		update_days: function () {
+			if (!this.is_month_loaded) {
+				$.notify({
+					title: 'Error updating sheet:<br />',
+					message: "App not initialised"
+				}, {
+					type: 'danger',
+					delay: 3000
+				});
+				return;
+			}
+
 			if (this.today.day.month === this.tomorrow.day.month) {
 				// GET IN SAME SHEET
 				let month_name = this.get_month_name(this.today.day);
@@ -184,7 +212,6 @@ var app = new Vue({
 						new_bookings[this.tomorrow.month.times[i]] = booking;
 				});
 				this.tomorrow.bookings = new_bookings;
-
 			})
 
 			// var params = {
@@ -200,6 +227,17 @@ var app = new Vue({
 			// });
 		},
 		send_booking: function (value, day, time) {
+			if (this.is_signed_in ===  false) {
+				$.notify({
+					title: 'Error updating sheet:<br />',
+					message: "You are not signed in"
+				}, {
+					type: 'danger',
+					delay: 3000
+				});
+				return;
+			}
+
 			let row = this.times.indexOf(time) + day.month.row;
 			let col = day.month.col + day.day.date() - 1;
 
@@ -235,24 +273,30 @@ var app = new Vue({
 		gapi.load("client:auth2", {
 			callback: () => {
 				gapi.client.init(apiConfig).then(() => {
-						let authInstance = gapi.auth2.getAuthInstance();
-						authInstance.isSignedIn.listen(this.init);
-
-						if (authInstance.isSignedIn.get())
+					let on_auth = (value) => {
+						this.is_signed_in = value;
+						if (value)
 							this.init();
-						else {
-							authInstance.signIn().catch(function (error) {
-								$.notify({
-									title: 'Error authenticating:<br />',
-									message: error.error + "<br />Please click " +
-										'<button class="m-1 btn btn-danger" onclick="gapi.auth2.getAuthInstance().signIn()">SIGN IN</button>'
-								}, {
-									delay: 0,
-									type: 'danger',
-								});
+					}
+
+					let authInstance = gapi.auth2.getAuthInstance();
+					authInstance.isSignedIn.listen(on_auth);
+
+					if (authInstance.isSignedIn.get()) {
+						on_auth(true);
+					} else {
+						authInstance.signIn().catch(function (error) {
+							$.notify({
+								title: 'Error authenticating:<br />',
+								message: error.error + "<br />Please click " +
+									'<button class="m-1 btn btn-danger" onclick="gapi.auth2.getAuthInstance().signIn()">SIGN IN</button>'
+							}, {
+								delay: 0,
+								type: 'danger',
 							});
-							// authInstance.signIn({ ux_mode: "redirect"}).catch(function (error) { console.log(error); });
-						}
+						});
+						// authInstance.signIn({ ux_mode: "redirect"}).catch(function (error) { console.log(error); });
+					}
 				});
 			},
 			onerror: function () {
