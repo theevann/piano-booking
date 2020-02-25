@@ -159,13 +159,7 @@ var app = new Vue({
 		},
 		update_days: function () {
 			if (!this.is_month_loaded) {
-				$.notify({
-					title: 'Error updating sheet:<br />',
-					message: "App not initialised"
-				}, {
-					type: 'danger',
-					delay: 3000
-				});
+				console.warn("Update not performed : App not initialised");
 				return;
 			}
 
