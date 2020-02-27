@@ -191,14 +191,14 @@ var app = new Vue({
 			request.then(([today_bookings, tomorrow_bookings]) => {
 				let new_bookings = {};
 				today_bookings && today_bookings.forEach((booking, i) => {
-					if (booking != "")
+					if (booking != "" && booking != "\n")
 						new_bookings[this.today.month.times[i]] = booking;
 				});
 				this.today.bookings = new_bookings;
 
 				new_bookings = {};
 				tomorrow_bookings && tomorrow_bookings.forEach((booking, i) => {
-					if (booking != "")
+					if (booking != "" && booking != "\n")
 						new_bookings[this.tomorrow.month.times[i]] = booking;
 				});
 				this.tomorrow.bookings = new_bookings;
