@@ -2,7 +2,11 @@ body {
     font: "Helvetica Neue";
 }
 
-tr.row:nth-of-type(odd) {
+thead tr.row {
+    background-color: #f9f9f9;
+}
+
+tr.row:nth-of-type(even) {
     background-color: #f9f9f9;
 }
 
