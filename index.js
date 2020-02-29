@@ -13,7 +13,9 @@ Vue.component('input-span', {
 	props: ["day", "time", "click_mode", "name"],
 	template: `
 		<span v-if="(time in day.bookings) && !edit_mode" @dblclick="to_edit_mode">{{ day.bookings[this.time] }}</span>
-		<button v-else-if="!(time in day.bookings) && !edit_mode && click_mode" @click="send_changes_click" class="btn cell">Register</button>
+		<button v-else-if="!(time in day.bookings) && !edit_mode && click_mode" @click="send_changes_click" class="btn cell">
+			<i class="fas fa-pen"></i>
+		</button>
 		<input v-else @keypress.enter='send_changes_next' @blur='send_changes_event' ref="input" type="text" class="form-control p-0 text-center bg-transparent cell" />
 	`,
 	data: function () {
@@ -111,6 +113,9 @@ var app = new Vue({
 		},
 		init: async function () {
 			this.is_month_loaded = false;
+
+			this.username = localStorage.getItem("username");
+			this.click_mode = JSON.parse(localStorage.getItem("click_mode"));
 
 			let promises = this.days.map(async (day_info) => {
 				let month_stored_name = day_info.day.month() + '-' + day_info.day.year() + "-" + this.sheet_tag;

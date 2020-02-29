@@ -41,11 +41,11 @@
 						<div class="container">
 							<div class="row">
 								<div class="btn-group btn-group-toggle col" data-toggle="buttons">
-									<label class="btn btn-secondary active" @click="click_mode = false"
+									<label class="btn btn-secondary" :class="[!click_mode ? 'active' : '']" @click="click_mode = false"
 										title="Use input fields to write in cells">
 										<input type="radio" autocomplete="off"> Input
 									</label>
-									<label class="btn btn-secondary" @click="click_mode = true"
+									<label class="btn btn-secondary" @click="click_mode = true" :class="[click_mode ? 'active' : '']"
 										title="Use click to automatically fill cells with your name">
 										<input type="radio" autocomplete="off"> Click
 									</label>
