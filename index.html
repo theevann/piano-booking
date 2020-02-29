@@ -6,7 +6,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta http-equiv="X-UA-Compatible" content="ie=edge" />
 	<meta name="google-site-verification" content="wzhiQu-TJLMnMUw_uWNbsk09OUHqdei3z6vzjQnqj4I" />
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-social/5.1.1/bootstrap-social.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.2/animate.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
 	<link rel="stylesheet" href="style.css">
@@ -15,143 +17,191 @@
 
 <body>
 	<div id="vue-app">
-		
-		<!-- ROOM BUTTONS -->
-		<div class="container text-center my-3">
-			<div class="row">
-				<div class="col-1">
-					<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseHelp"
-						aria-expanded="false" aria-controls="collapseHelp">
-						?
+
+		<div v-if="is_signing_in">
+			<div class="d-flex justify-content-center">
+				<div class="mt-4">Loading...</div>
+			</div>
+			<div class="d-flex justify-content-center">
+				<div class="spinner-border mt-4" role="status"></div>
+			</div>
+		</div>
+
+		<div v-cloak v-else-if="!is_signed_in">
+			<div class="container text-center my-3">
+				<div class="row justify-content-center">
+					<h1>
+						Booking Site for EPFL Piano Rooms
+					</h1>
+				</div>
+				<div class="row justify-content-center mt-4">
+					<h4>
+						Please sign in using your Google account
+					</h4>
+				</div>
+				<div class="row justify-content-center mt-3">
+					<button class="btn btn-social btn-google" onClick="gapi.auth2.getAuthInstance().signIn()">
+						<i class="fab fa-google"></i>
+						<span>Sign In</span>
 					</button>
 				</div>
-				<div class="col-10">
-					<div class="row justify-content-center">
-						<div v-for="(id, tag) in sheet_ids" class="col-6 col-md-5">
-							<button @click="change_room(tag)" class="btn btn-block btn-secondary text-uppercase"
-								:class="[sheet_tag == tag ? 'font-weight-bold' : '', sheet_tag == tag ? 'active' : '']">{{ tag }}</button>
-						</div>
-					</div>
-				</div>
-				<div class="col-1">
-					<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseOptions"
-						aria-expanded="false" aria-controls="collapseOptions">
-						<i class="fas fa-bars"></i>
-					</button>
+				<div class="row justify-content-center mt-3">
+					<p>
+						Note: This is needed as we access google sheet api as a logged in user
+					</p>
 				</div>
 			</div>
 		</div>
 
-
-		<!-- OPTIONS AND HELP -->
-		<div class="container my-3">
-			<div class="row justify-content-center">
-				<div class="collapse" id="collapseOptions">
-					<div class="card card-body text-center">
-						<div class="container">
-							<div class="row">
-								<div class="btn-group btn-group-toggle col" data-toggle="buttons">
-									<label class="btn btn-secondary" :class="[!click_mode ? 'active' : '']" @click="click_mode = false"
-										title="Use input fields to write in cells">
-										<input type="radio" autocomplete="off"> Input
-									</label>
-									<label class="btn btn-secondary" @click="click_mode = true" :class="[click_mode ? 'active' : '']"
-										title="Use click to automatically fill cells with your name">
-										<input type="radio" autocomplete="off"> Click
-									</label>
-								</div>
-								<div class="col input-group">
-									<div class="input-group-prepend">
-										<span class="input-group-text">Name</span>
-									</div>
-									<input v-model="username" type="text" class="form-control" placeholder="Your name"
-										aria-label="Username">
-								</div>
+		<div v-cloak v-else>
+			<!-- ROOM BUTTONS -->
+			<div class="container text-center my-3">
+				<div class="row">
+					<div class="col-1">
+						<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseHelp"
+							aria-expanded="false" aria-controls="collapseHelp">
+							?
+						</button>
+					</div>
+					<div class="col-10">
+						<div class="row justify-content-center">
+							<div v-for="(id, tag) in sheet_ids" class="col-6 col-md-5">
+								<button @click="change_room(tag)" class="btn btn-block btn-secondary text-uppercase"
+									:class="[sheet_tag == tag ? 'font-weight-bold' : '', sheet_tag == tag ? 'active' : '']">{{ tag }}</button>
 							</div>
 						</div>
-
 					</div>
-				</div>
-
-				<div class="collapse" id="collapseHelp">
-					<div class="card card-body mt-1">
-						<h4>What ?</h4>
-						<p>
-							This is an <em>unofficial</em> booking site for EPFL Piano rooms.
-							It simplifies the booking process by displaying only two days and allowing to switch between the 2 rooms on one page.
-						</p>
-						<h4>How to use it ?</h4>
-						<p>
-							<ul>
-								<li>
-									You can book a time slot by entering your name in an empty input.
-								</li>
-								<li>
-									You can change an existing reservation by double clicking on it.
-								</li>
-								<li>
-									You can use "click" mode to book in one click : Click on the option button (up right), 
-									choose the "click" mode and write your name in the name field.
-								</li>
-							</ul>
-						</p>
-						<h4>How does it works ?</h4>
-						<p>
-							The site fetches data from the two spreadsheets
-							[<a href="https://docs.google.com/spreadsheets/d/1i2pVPcG7Qm3Zxn5lSta-uR0-LXXurSZhcc8xhsoF7zA/edit">CE</a>,
-							<a href="https://docs.google.com/spreadsheets/d/1ANoEagiR88K3e0WVh0lP9sk8inODCuPya9MUNwInpk8/edit">MXD</a>].
-							<br />
-							It updates whenever you refocus the page or change room.
-							<br />
-							It sends updates when you hit enter or click out of an input after writing.
-							<br />
-							This website uses <a href="https://vuejs.org/">Vue.js</a>, <a href="https://getbootstrap.com/">Bootstrap</a>, <a href="https://jquery.com/">jQuery</a>, <a href="https://momentjs.com/">moment.js</a> and <a href="https://github.com/google/google-api-javascript-client">Google api</a>.
-						</p>
-						<h4>Links</h4>
-						<p>
-							<a href="http://aumc.epfl.ch/index.php/les-salles-de-musique/piano-rooms/">Official AUMC website</a>
-							<br>
-							<a href="https://plan.epfl.ch/?room==CE%200%20215.2">Location Room CE 0215.2</a>
-							<br>
-							<a href="https://plan.epfl.ch/?room==MXD%20924">Location Room MXD</a>
-						</p>
-						<h4>Feedback</h4>
-						<p>
-							Comments, Feedback, Improvements welcome at <a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;">&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;</a>
-						</p>
+					<div class="col-1">
+						<button class="btn btn-primary" type="button" data-toggle="collapse"
+							data-target="#collapseOptions" aria-expanded="false" aria-controls="collapseOptions">
+							<i class="fas fa-bars"></i>
+						</button>
 					</div>
 				</div>
 			</div>
-		</div>
 
 
-		<!-- MAIN TABLE -->
-		<table id="table" class="container text-center mb-3">
-			<thead>
-				<tr class="row justify-content-center border-bottom">
-					<th class="col-4">Date</th>
-					<th class="col-4">Aujourd'hui ({{ today.day.format("DD.MM") }})</th>
-					<th class="col-4">Demain ({{ tomorrow.day.format("DD.MM") }})</th>
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr v-for="(time, idt) in times" class="row border-bottom justify-content-center">
-					<td class="col-4">
-						<span>{{ time }}</span>
-					</td>
-					<td :id="'day-' + day.day.date()" v-for="(day, idd) in days" class="col-4">
-						<input-span @send_changes="send_booking" :day="day" :time="time" :click_mode="click_mode" :name="username"></input-span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+			<!-- OPTIONS AND HELP -->
+			<div class="container my-3">
+				<div class="row justify-content-center">
+					<div class="collapse" id="collapseOptions">
+						<div class="card card-body text-center">
+							<div class="container">
+								<div class="row">
+									<div class="btn-group btn-group-toggle col" data-toggle="buttons">
+										<label class="btn btn-secondary" :class="[!click_mode ? 'active' : '']"
+											@click="click_mode = false" title="Use input fields to write in cells">
+											<input type="radio" autocomplete="off"> Input
+										</label>
+										<label class="btn btn-secondary" @click="click_mode = true"
+											:class="[click_mode ? 'active' : '']"
+											title="Use click to automatically fill cells with your name">
+											<input type="radio" autocomplete="off"> Click
+										</label>
+									</div>
+									<div class="col input-group">
+										<div class="input-group-prepend">
+											<span class="input-group-text">Name</span>
+										</div>
+										<input v-model="username" type="text" class="form-control"
+											placeholder="Your name" aria-label="Username">
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</div>
+
+					<div class="collapse" id="collapseHelp">
+						<div class="card card-body mt-1">
+							<h4>What ?</h4>
+							<p>
+								This is an <em>unofficial</em> booking site for EPFL Piano rooms.
+								It simplifies the booking process by displaying only two days and allowing to switch
+								between the 2 rooms on one page.
+							</p>
+							<h4>How to use it ?</h4>
+							<p>
+								<ul>
+									<li>
+										You can book a time slot by entering your name in an empty input.
+									</li>
+									<li>
+										You can change an existing reservation by double clicking on it.
+									</li>
+									<li>
+										You can use "click" mode to book in one click : Click on the option button (up
+										right),
+										choose the "click" mode and write your name in the name field.
+									</li>
+								</ul>
+							</p>
+							<h4>How does it works ?</h4>
+							<p>
+								The site fetches data from the two spreadsheets
+								[<a
+									href="https://docs.google.com/spreadsheets/d/1i2pVPcG7Qm3Zxn5lSta-uR0-LXXurSZhcc8xhsoF7zA/edit">CE</a>,
+								<a
+									href="https://docs.google.com/spreadsheets/d/1ANoEagiR88K3e0WVh0lP9sk8inODCuPya9MUNwInpk8/edit">MXD</a>].
+								<br />
+								It updates whenever you refocus the page or change room.
+								<br />
+								It sends updates when you hit enter or click out of an input after writing.
+								<br />
+								This website uses <a href="https://vuejs.org/">Vue.js</a>, <a
+									href="https://getbootstrap.com/">Bootstrap</a>, <a
+									href="https://jquery.com/">jQuery</a>, <a href="https://momentjs.com/">moment.js</a>
+								and <a href="https://github.com/google/google-api-javascript-client">Google api</a>.
+							</p>
+							<h4>Links</h4>
+							<p>
+								<a href="http://aumc.epfl.ch/index.php/les-salles-de-musique/piano-rooms/">Official AUMC
+									website</a>
+								<br>
+								<a href="https://plan.epfl.ch/?room==CE%200%20215.2">Location Room CE 0215.2</a>
+								<br>
+								<a href="https://plan.epfl.ch/?room==MXD%20924">Location Room MXD</a>
+							</p>
+							<h4>Feedback</h4>
+							<p>
+								Comments, Feedback, Improvements welcome at <a
+									href="&#109;&#097;&#105;&#108;&#116;&#111;:&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;">&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
 
 
-		<!-- CREDITS -->
-		<div class="container mb-1">
-			<div class="row justify-content-center">
-				<div class="col-4 text-center">Made with &hearts; by Evann </div>
+			<!-- MAIN TABLE -->
+			<table id="table" class="container text-center mb-3">
+				<thead>
+					<tr class="row justify-content-center border-bottom">
+						<th class="col-4">Date</th>
+						<th class="col-4">Aujourd'hui ({{ today.day.format("DD.MM") }})</th>
+						<th class="col-4">Demain ({{ tomorrow.day.format("DD.MM") }})</th>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="(time, idt) in times" class="row border-bottom justify-content-center">
+						<td class="col-4">
+							<span>{{ time }}</span>
+						</td>
+						<td :id="'day-' + day.day.date()" v-for="(day, idd) in days" class="col-4">
+							<input-span @send_changes="send_booking" :day="day" :time="time" :click_mode="click_mode"
+								:name="username"></input-span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+
+			<!-- CREDITS -->
+			<div class="container mb-1">
+				<div class="row justify-content-center">
+					<div class="col-4 text-center">Made with &hearts; by Evann </div>
+				</div>
 			</div>
 		</div>
 	</div>

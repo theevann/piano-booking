@@ -13,7 +13,7 @@ Vue.component('input-span', {
 	props: ["day", "time", "click_mode", "name"],
 	template: `
 		<span v-if="(time in day.bookings) && !edit_mode" @dblclick="to_edit_mode">{{ day.bookings[this.time] }}</span>
-		<button v-else-if="!(time in day.bookings) && !edit_mode && click_mode" @click="send_changes_click" class="btn cell">
+		<button v-else-if="!(time in day.bookings) && !edit_mode && click_mode" @click="send_changes_click" class="btn btn-outline-secondary cell">
 			<i class="fas fa-pen"></i>
 		</button>
 		<input v-else @keypress.enter='send_changes_next' @blur='send_changes_event' ref="input" type="text" class="form-control p-0 text-center bg-transparent cell" />
@@ -59,6 +59,7 @@ var app = new Vue({
 	el: "#vue-app",
 	data: {
 		is_signed_in: false,
+		is_signing_in: true,
 		is_month_loaded: false,
 		username: "",
 		click_mode: "",
@@ -114,7 +115,7 @@ var app = new Vue({
 		init: async function () {
 			this.is_month_loaded = false;
 
-			this.username = localStorage.getItem("username");
+			this.username = localStorage.getItem("username") || "";
 			this.click_mode = JSON.parse(localStorage.getItem("click_mode"));
 
 			let promises = this.days.map(async (day_info) => {
@@ -295,29 +296,16 @@ var app = new Vue({
 			callback: async () => {
 				await gapi.client.init(apiConfig);
 
-				let on_auth = (value) => {
-					this.is_signed_in = value;
-					if (value)
+				let on_auth = (is_signed_in) => {
+					this.is_signing_in = false;
+					this.is_signed_in = is_signed_in;
+					if (is_signed_in)
 						this.init();
 				};
 
 				let authInstance = gapi.auth2.getAuthInstance();
 				authInstance.isSignedIn.listen(on_auth);
-
-				if (authInstance.isSignedIn.get()) {
-					on_auth(true);
-				} else {
-					authInstance.signIn().catch(function (error) {
-						$.notify({
-							title: 'Error authenticating:<br />',
-							message: error.error + "<br />Please click " +
-								'<button class="m-1 btn btn-danger" onclick="gapi.auth2.getAuthInstance().signIn()">SIGN IN</button>'
-						}, {
-							delay: 0,
-							type: 'danger',
-						});
-					});
-				}
+				on_auth(authInstance.isSignedIn.get());
 			},
 			onerror: function () {
 				console.warn('gapi.client failed to load!');
