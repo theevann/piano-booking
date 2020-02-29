@@ -8,6 +8,7 @@
 	<meta name="google-site-verification" content="wzhiQu-TJLMnMUw_uWNbsk09OUHqdei3z6vzjQnqj4I" />
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.2/animate.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
 	<link rel="stylesheet" href="style.css">
 	<title>Piano Room Booking</title>
 </head>
@@ -15,10 +16,51 @@
 <body>
 	<div id="vue-app">
 		<div class="container text-center my-3">
+			<div class="row">
+				<div class="col-10 offset-1">
+					<div class="row justify-content-center">
+						<div v-for="(id, tag) in sheet_ids" class="col-6 col-md-4">
+							<button @click="change_room(tag)" class="btn btn-block btn-secondary text-uppercase"
+								:class="[sheet_tag == tag ? 'font-weight-bold' : '', sheet_tag == tag ? 'active' : '']">{{ tag }}</button>
+						</div>
+					</div>
+				</div>
+				<div class="col-1">
+					<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseOptions"
+						aria-expanded="false" aria-controls="collapseOptions">
+						<i class="fas fa-bars"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="container text-center my-3">
 			<div class="row justify-content-center">
-				<div v-for="(id, tag) in sheet_ids" class="col-5 col-md-3">
-					<button @click="change_room(tag)" class="btn btn-block btn-secondary text-uppercase"
-						:class="[sheet_tag == tag ? 'font-weight-bold' : '', sheet_tag == tag ? 'active' : '']">{{ tag }}</button>
+				<div class="collapse" id="collapseOptions">
+					<div class="card card-body">
+						<div class="container">
+							<div class="row">
+								<div class="btn-group btn-group-toggle col" data-toggle="buttons">
+									<label class="btn btn-secondary active" @click="click_mode = false"
+										title="Use input fields to write in cells">
+										<input type="radio" autocomplete="off"> Input
+									</label>
+									<label class="btn btn-secondary" @click="click_mode = true"
+										title="Use click to automatically fill cells with your name">
+										<input type="radio" autocomplete="off"> Click
+									</label>
+								</div>
+								<div class="col input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text">Name</span>
+									</div>
+									<input v-model="username" type="text" class="form-control" placeholder="Your name"
+										aria-label="Username">
+								</div>
+							</div>
+						</div>
+
+					</div>
 				</div>
 			</div>
 		</div>
@@ -39,7 +81,7 @@
 						<span>{{ time }}</span>
 					</td>
 					<td :id="'day-' + day.day.date()" v-for="(day, idd) in days" class="col-4">
-						<input-span @send_changes="send_booking" :day="day" :time="time"></input-span>
+						<input-span @send_changes="send_booking" :day="day" :time="time" :click_mode="click_mode" :name="username"></input-span>
 					</td>
 				</tr>
 			</tbody>

@@ -10,10 +10,11 @@ const apiConfig = {
 
 
 Vue.component('input-span', {
-	props: ["day", "time"],
+	props: ["day", "time", "click_mode", "name"],
 	template: `
 		<span v-if="(time in day.bookings) && !edit_mode" @dblclick="to_edit_mode">{{ day.bookings[this.time] }}</span>
-		<input v-else @keypress.enter='send_changes_next' @blur='send_changes' ref="input" type="text" class="form-control p-0 text-center bg-transparent" />
+		<button v-else-if="!(time in day.bookings) && !edit_mode && click_mode" @click="send_changes_click" class="btn cell">Register</button>
+		<input v-else @keypress.enter='send_changes_next' @blur='send_changes_event' ref="input" type="text" class="form-control p-0 text-center bg-transparent cell" />
 	`,
 	data: function () {
 		return {
@@ -26,18 +27,24 @@ Vue.component('input-span', {
 			this.edit_mode = true;
 			this.$nextTick(() => {
 				$(this.$refs.input).val(this.day.bookings[this.time]);
-				$(this.$refs.input).focus();
+				$(this.$refs.input).select();
 			});
 		},
 		send_changes_next(event) {
 			let day_inputs = $(`#day-${this.day.day.date()} input`);
 			let idx = day_inputs.index($(this.$refs.input));
 			day_inputs.eq(idx + 1).focus();
-			this.send_changes(event);
+			this.send_changes_event(event);
 		},
-		send_changes(event) {
+		send_changes_event(event) {
+			this.send_changes(event.target.value);
+		},
+		send_changes_click() {
+			this.send_changes(this.name);
+		},
+		send_changes(name) {
 			if (moment().diff(this.last_sent) > 500) {
-				this.$emit("send_changes", event.target.value || "", this.day, this.time);
+				this.$emit("send_changes", name || "", this.day, this.time);
 				this.last_sent = moment();
 				this.edit_mode = false;
 			}
@@ -51,6 +58,8 @@ var app = new Vue({
 	data: {
 		is_signed_in: false,
 		is_month_loaded: false,
+		username: "",
+		click_mode: "",
 		sheet_ids: {
 			ce: "1i2pVPcG7Qm3Zxn5lSta-uR0-LXXurSZhcc8xhsoF7zA",
 			mxd: "1ANoEagiR88K3e0WVh0lP9sk8inODCuPya9MUNwInpk8",
@@ -77,6 +86,14 @@ var app = new Vue({
 		},
 		days: function () {
 			return [this.today, this.tomorrow];
+		}
+	},
+	watch: {
+		username: function() {
+			localStorage.setItem("username", this.username);
+		},
+		click_mode: function() {
+			localStorage.setItem("click_mode", JSON.stringify(this.click_mode));
 		}
 	},
 	methods: {

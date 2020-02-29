@@ -14,14 +14,20 @@ tr.row:hover {
     font-size: 0.7rem;
 }
 
+button.cell {
+  padding: inherit;
+  font-size:inherit;
+}
+
 @media only screen and (max-width: 320px) {
   .row {
     font-size: 0.8rem;
   }
 }
 
-input.form-control {
+input.cell {
     font-size: 0.7rem;
+    border-color: #bbbcbc;
 }
 
 @media only screen and (max-width: 320px) {
