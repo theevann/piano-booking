@@ -15,11 +15,19 @@
 
 <body>
 	<div id="vue-app">
+		
+		<!-- ROOM BUTTONS -->
 		<div class="container text-center my-3">
 			<div class="row">
-				<div class="col-10 offset-1">
+				<div class="col-1">
+					<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseHelp"
+						aria-expanded="false" aria-controls="collapseHelp">
+						?
+					</button>
+				</div>
+				<div class="col-10">
 					<div class="row justify-content-center">
-						<div v-for="(id, tag) in sheet_ids" class="col-6 col-md-4">
+						<div v-for="(id, tag) in sheet_ids" class="col-6 col-md-5">
 							<button @click="change_room(tag)" class="btn btn-block btn-secondary text-uppercase"
 								:class="[sheet_tag == tag ? 'font-weight-bold' : '', sheet_tag == tag ? 'active' : '']">{{ tag }}</button>
 						</div>
@@ -34,10 +42,12 @@
 			</div>
 		</div>
 
-		<div class="container text-center my-3">
+
+		<!-- OPTIONS AND HELP -->
+		<div class="container my-3">
 			<div class="row justify-content-center">
 				<div class="collapse" id="collapseOptions">
-					<div class="card card-body">
+					<div class="card card-body text-center">
 						<div class="container">
 							<div class="row">
 								<div class="btn-group btn-group-toggle col" data-toggle="buttons">
@@ -62,11 +72,61 @@
 
 					</div>
 				</div>
+
+				<div class="collapse" id="collapseHelp">
+					<div class="card card-body mt-1">
+						<h4>What ?</h4>
+						<p>
+							This is an <em>unofficial</em> booking site for EPFL Piano rooms.
+							It simplifies the booking process by displaying only two days and allowing to switch between the 2 rooms on one page.
+						</p>
+						<h4>How to use it ?</h4>
+						<p>
+							<ul>
+								<li>
+									You can book a time slot by entering your name in an empty input.
+								</li>
+								<li>
+									You can change an existing reservation by double clicking on it.
+								</li>
+								<li>
+									You can use "click" mode to book in one click : Click on the option button (up right), 
+									choose the "click" mode and write your name in the name field.
+								</li>
+							</ul>
+						</p>
+						<h4>How does it works ?</h4>
+						<p>
+							The site fetches data from the two spreadsheets
+							[<a href="https://docs.google.com/spreadsheets/d/1i2pVPcG7Qm3Zxn5lSta-uR0-LXXurSZhcc8xhsoF7zA/edit">CE</a>,
+							<a href="https://docs.google.com/spreadsheets/d/1ANoEagiR88K3e0WVh0lP9sk8inODCuPya9MUNwInpk8/edit">MXD</a>].
+							<br />
+							It updates whenever you refocus the page or change room.
+							<br />
+							It sends updates when you hit enter or click out of an input after writing.
+							<br />
+							This website uses <a href="https://vuejs.org/">Vue.js</a>, <a href="https://getbootstrap.com/">Bootstrap</a>, <a href="https://jquery.com/">jQuery</a>, <a href="https://momentjs.com/">moment.js</a> and <a href="https://github.com/google/google-api-javascript-client">Google api</a>.
+						</p>
+						<h4>Links</h4>
+						<p>
+							<a href="http://aumc.epfl.ch/index.php/les-salles-de-musique/piano-rooms/">Official AUMC website</a>
+							<br>
+							<a href="https://plan.epfl.ch/?room==CE%200%20215.2">Location Room CE 0215.2</a>
+							<br>
+							<a href="https://plan.epfl.ch/?room==MXD%20924">Location Room MXD</a>
+						</p>
+						<h4>Feedback</h4>
+						<p>
+							Comments, Feedback, Improvements welcome at <a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;">&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;</a>
+						</p>
+					</div>
+				</div>
 			</div>
 		</div>
 
 
-		<table id="table" class="container text-center mb-5">
+		<!-- MAIN TABLE -->
+		<table id="table" class="container text-center mb-3">
 			<thead>
 				<tr class="row justify-content-center border-bottom">
 					<th class="col-4">Date</th>
@@ -86,9 +146,17 @@
 				</tr>
 			</tbody>
 		</table>
+
+
+		<!-- CREDITS -->
+		<div class="container mb-1">
+			<div class="row justify-content-center">
+				<div class="col-4 text-center">Made with &hearts; by Evann </div>
+			</div>
+		</div>
 	</div>
 
-	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
 	<script src="https://apis.google.com/js/api.js"></script>
 	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>

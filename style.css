@@ -10,7 +10,7 @@ tr.row:hover {
     background-color: gainsboro;
 }
 
-.row {
+table .row {
     font-size: 0.7rem;
 }
 
@@ -20,13 +20,13 @@ button.cell {
 }
 
 @media only screen and (max-width: 320px) {
-  .row {
+  table .row {
     font-size: 0.8rem;
   }
 }
 
 input.cell {
-    font-size: 0.7rem;
+    font-size: inherit;
     border-color: #bbbcbc;
 }
 
