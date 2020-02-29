@@ -37,12 +37,12 @@ button.cell {
   padding: inherit;
 }
 
-@media only screen and (max-width: 400px) {
+@media screen and (max-width: 500px) {
   table .row {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
   .cell {
-    width: 80%;
+    width: 100%;
   }
 }
 
