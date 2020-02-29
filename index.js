@@ -80,52 +80,61 @@ var app = new Vue({
 		}
 	},
 	methods: {
-		get_month_name: function (day) {
-			return this.sheet_tag == "ce" ? " Février 2020" : "Fevrier 2020";
-			return capitalize(day.format(" MMMM YYYY")); // TODO:
+		get_days_range: function (day_1_info, nb_days = 1) {
+			let month_name = day_1_info.month.title;
+			let row_start = day_1_info.month.row;
+			let row_end = day_1_info.month.row + day_1_info.month.times.length;
+			let col_start = day_1_info.month.col + day_1_info.day.date() - 1;
+			let col_end = col_start + nb_days - 1;
+			return `${month_name}!${rowcol_to_a1(row_start, col_start)}:${rowcol_to_a1(row_end, col_end)}`;
 		},
 		change_room: function (tag) {
 			this.sheet_tag = tag;
 			this.init();
 		},
-		init: function () {
+		init: async function () {
 			this.is_month_loaded = false;
-			let promises = this.days.map((day_info) => {
-				let month_stored_name = this.get_month_name(day_info.day) + " - " + this.sheet_tag;
-				let month = JSON.parse(localStorage.getItem(month_stored_name));
 
-				if (month === null) {
-					return this.load_month(day_info.day).then((month) => {
-						day_info.month = month
-						return month;
-					});
-				}
-
-				day_info.month = month;
-				return month;
+			let promises = this.days.map(async (day_info) => {
+				let month_stored_name = day_info.day.month() + '-' + day_info.day.year() + "-" + this.sheet_tag;
+				day_info.month = await (JSON.parse(localStorage.getItem(month_stored_name)) || this.load_month(day_info.day));
+				return day_info.month;
 			});
 
-			Promise.all(promises)
-				.then(([month_0, month_1]) => {
-					this.times = month_0.times; // TODO
-					this.is_month_loaded = true;
-				})
-				.then(this.update_days)
+			[month_0, month_1] = await Promise.all(promises)
+			this.times = month_0.times; // TODO
+
+			this.is_month_loaded = true;
+			this.update_days();
 		},
 		load_month: function (day) {
-			let month_name = this.get_month_name(day);
 
-			var params = {
-				spreadsheetId: this.sheet_id,
-				range: `${month_name}!A1:AH40`,
-				valueRenderOption: "FORMATTED_VALUE",
-				majorDimension: "COLUMNS"
-			};
+			let find_day_in_sheets = async (day_repr, sheets, index) => {
+				if (index >= sheets.length) {
+					$.notify({
+						title: 'Error loading sheet:<br />',
+						message: "Sheet of current month does not exist"
+					}, {
+						type: 'danger',
+						delay: 3000
+					});
+					return;
+				}
 
-			var request = this.sheet_api.values.get(params);
+				var params = {
+					spreadsheetId: this.sheet_id,
+					range: `${sheets[index].properties.title}!A1:AH40`,
+					valueRenderOption: "FORMATTED_VALUE",
+					majorDimension: "COLUMNS"
+				};
 
-			return request.then(response => {
-				let values = response.result.values;
+				let request = this.sheet_api.values.get(params);
+				let values = (await request).result.values;
+				let [idx_first_row, idx_first_col] = find_2d(values, day_repr);
+
+				if (idx_first_row < 0) {
+					return find_day_in_sheets(day_repr, sheets, index + 1);
+				}
 
 				// GET TIME COLUMN
 
@@ -133,48 +142,43 @@ var app = new Vue({
 				let time_col = values[idx_time_col];
 				let times = time_col.slice(idx_time_row + 1);
 
-				// GET FIRST DAY ROW AND COL INDEX
-
-				let first_day_month_repr = day.clone().startOf("month").format("DD.MM.YYYY");
-				let [idx_first_row, idx_first_col] = find_2d(
-					values,
-					first_day_month_repr
-				);
-
 				let month_info = {
 					times: times,
 					row: idx_first_row + 1,
-					col: idx_first_col
+					col: idx_first_col,
+					title: sheets[index].properties.title
 				};
 
 				// SAVE TO LOCAL STORAGE
 
 				localStorage.setItem(
-					month_name + " - " + this.sheet_tag,
+					day.month() + '-' + day.year() + "-" + this.sheet_tag,
 					JSON.stringify(month_info)
 				);
 
 				return month_info;
+			};
+
+			return gapi.client.sheets.spreadsheets.get({ spreadsheetId: this.sheet_id }).then(spreadsheetInfo => {
+				let first_day_month_repr = day.clone().startOf("month").format("DD.MM.YYYY");
+				let sheets = spreadsheetInfo.result.sheets;
+				return find_day_in_sheets(first_day_month_repr, sheets, 0);
 			});
 		},
-		update_days: function () {
+		update_days: async function () {
 			if (!this.is_month_loaded) {
 				console.warn("Update not performed : App not initialised");
 				return;
 			}
 
-			if (this.today.day.month === this.tomorrow.day.month) {
+			if (this.today.day.month() === this.tomorrow.day.month()) {
 				// GET IN SAME SHEET
-				let month_name = this.get_month_name(this.today.day);
 
-				let row_start = this.today.month.row;
-				let row_end = this.today.month.row + this.today.month.times.length;
-				let col_start = this.today.month.col + this.today.day.date() - 1;
-				let col_end = col_start + 1;
+				let range_today = this.get_days_range(this.today, 2);
 
 				var params = {
 					spreadsheetId: this.sheet_id,
-					range: `${month_name}!${rowcol_to_a1(row_start, col_start)}:${rowcol_to_a1(row_end, col_end)}`,
+					range: range_today,
 					valueRenderOption: 'FORMATTED_VALUE',
 					majorDimension: 'COLUMNS'
 				};
@@ -185,39 +189,42 @@ var app = new Vue({
 				});
 
 			} else {
-				// GET IN DIFFERENT SHEET
+				// GET IN DIFFERENT SHEETS
+
+				let range_today = this.get_days_range(this.today);
+				let range_tomorrow = this.get_days_range(this.tomorrow);
+
+				var params = {
+					spreadsheetId: this.sheet_id,
+					ranges: [range_today, range_tomorrow],
+					valueRenderOption: 'FORMATTED_VALUE',
+					majorDimension: 'COLUMNS'
+				};
+				var request = this.sheet_api.values.batchGet(params);
+
+				request = request.then(response => {
+					return response.result.valueRanges.map(range => range.values[0]);
+				});
 			}
 
-			request.then(([today_bookings, tomorrow_bookings]) => {
-				let new_bookings = {};
-				today_bookings && today_bookings.forEach((booking, i) => {
-					if (booking != "" && booking != "\n")
-						new_bookings[this.today.month.times[i]] = booking;
-				});
-				this.today.bookings = new_bookings;
+			let [today_bookings, tomorrow_bookings] = await request;
 
-				new_bookings = {};
-				tomorrow_bookings && tomorrow_bookings.forEach((booking, i) => {
-					if (booking != "" && booking != "\n")
-						new_bookings[this.tomorrow.month.times[i]] = booking;
-				});
-				this.tomorrow.bookings = new_bookings;
-			})
+			let new_bookings = {};
+			today_bookings && today_bookings.forEach((booking, i) => {
+				if (booking != "" && booking != "\n")
+					new_bookings[this.today.month.times[i]] = booking;
+			});
+			this.today.bookings = new_bookings;
 
-			// var params = {
-			//     spreadsheetId: sheet_id,
-			//     ranges: ["A1:A50", `${month_name}!${rowcol_to_a1(row, col)}:${rowcol_to_a1(row + nb_timeslot + 1, col)}`],
-			//     valueRenderOption: 'FORMATTED_VALUE',
-			//     majorDimension: 'COLUMNS'
-			// };
-
-			// var request = this.sheet_api.values.batchGet(params);
-			// request.then(response => {
-			//     console.log(response.result);
-			// });
+			new_bookings = {};
+			tomorrow_bookings && tomorrow_bookings.forEach((booking, i) => {
+				if (booking != "" && booking != "\n")
+					new_bookings[this.tomorrow.month.times[i]] = booking;
+			});
+			this.tomorrow.bookings = new_bookings;
 		},
 		send_booking: function (value, day, time) {
-			if (this.is_signed_in ===  false) {
+			if (this.is_signed_in === false) {
 				$.notify({
 					title: 'Error updating sheet:<br />',
 					message: "You are not signed in"
@@ -239,7 +246,7 @@ var app = new Vue({
 			gapi.client.sheets.spreadsheets.values
 				.update({
 					spreadsheetId: this.sheet_id,
-					range: `${rowcol_to_a1(row, col)}:${rowcol_to_a1(row + 1, col)}`,
+					range: `${day.month.title}!${rowcol_to_a1(row, col)}:${rowcol_to_a1(row + 1, col)}`,
 					valueInputOption: "RAW",
 					resource: {
 						values: [
@@ -247,7 +254,7 @@ var app = new Vue({
 						]
 					}
 				})
-				.then(() => {}, (reason) => {
+				.then(() => { }, (reason) => {
 					$.notify({
 						title: 'Error updating sheet:<br />',
 						message: reason.result.error.message
@@ -263,33 +270,32 @@ var app = new Vue({
 	},
 	mounted: function () {
 		gapi.load("client:auth2", {
-			callback: () => {
-				gapi.client.init(apiConfig).then(() => {
-					let on_auth = (value) => {
-						this.is_signed_in = value;
-						if (value)
-							this.init();
-					}
+			callback: async () => {
+				await gapi.client.init(apiConfig);
 
-					let authInstance = gapi.auth2.getAuthInstance();
-					authInstance.isSignedIn.listen(on_auth);
+				let on_auth = (value) => {
+					this.is_signed_in = value;
+					if (value)
+						this.init();
+				};
 
-					if (authInstance.isSignedIn.get()) {
-						on_auth(true);
-					} else {
-						authInstance.signIn().catch(function (error) {
-							$.notify({
-								title: 'Error authenticating:<br />',
-								message: error.error + "<br />Please click " +
-									'<button class="m-1 btn btn-danger" onclick="gapi.auth2.getAuthInstance().signIn()">SIGN IN</button>'
-							}, {
-								delay: 0,
-								type: 'danger',
-							});
+				let authInstance = gapi.auth2.getAuthInstance();
+				authInstance.isSignedIn.listen(on_auth);
+
+				if (authInstance.isSignedIn.get()) {
+					on_auth(true);
+				} else {
+					authInstance.signIn().catch(function (error) {
+						$.notify({
+							title: 'Error authenticating:<br />',
+							message: error.error + "<br />Please click " +
+								'<button class="m-1 btn btn-danger" onclick="gapi.auth2.getAuthInstance().signIn()">SIGN IN</button>'
+						}, {
+							delay: 0,
+							type: 'danger',
 						});
-						// authInstance.signIn({ ux_mode: "redirect"}).catch(function (error) { console.log(error); });
-					}
-				});
+					});
+				}
 			},
 			onerror: function () {
 				console.warn('gapi.client failed to load!');
