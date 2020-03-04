@@ -62,6 +62,7 @@ var app = new Vue({
 		is_signing_in: true,
 		is_month_loaded: false,
 		last_updated: moment(),
+		count: 0,
 		username: "",
 		click_mode: "",
 		sheet_ids: {
@@ -231,9 +232,12 @@ var app = new Vue({
 			}
 
 			let [today_bookings, tomorrow_bookings] = await request;
+			this.count = 0;
 
 			let new_bookings = {};
 			today_bookings && today_bookings.forEach((booking, i) => {
+				if (booking.length > 2 && booking.slice(booking.length - 2) == "  ") this.count++;
+				booking = booking.trim();
 				if (booking != "" && booking != "\n")
 					new_bookings[this.today.month.times[i]] = booking;
 			});
@@ -241,6 +245,8 @@ var app = new Vue({
 
 			new_bookings = {};
 			tomorrow_bookings && tomorrow_bookings.forEach((booking, i) => {
+				if (booking.length > 1 && booking.slice(booking.length - 2) == "  ") this.count++;
+				booking = booking.trim();
 				if (booking != "" && booking != "\n")
 					new_bookings[this.tomorrow.month.times[i]] = booking;
 			});
@@ -273,7 +279,7 @@ var app = new Vue({
 					valueInputOption: "RAW",
 					resource: {
 						values: [
-							[value]
+							[value + "  "]
 						]
 					}
 				})
