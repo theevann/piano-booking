@@ -110,13 +110,11 @@ var app = new Vue({
 		},
 		change_room: function (tag) {
 			this.sheet_tag = tag;
+			localStorage.setItem("sheet_tag", tag);
 			this.init();
 		},
 		init: async function () {
 			this.is_month_loaded = false;
-
-			this.username = localStorage.getItem("username") || "";
-			this.click_mode = JSON.parse(localStorage.getItem("click_mode"));
 
 			let promises = this.days.map(async (day_info) => {
 				let month_stored_name = day_info.day.month() + '-' + day_info.day.year() + "-" + this.sheet_tag;
@@ -292,6 +290,10 @@ var app = new Vue({
 		},
 	},
 	mounted: function () {
+		this.sheet_tag = localStorage.getItem("sheet_tag") || "ce";
+		this.username = localStorage.getItem("username") || "";
+		this.click_mode = JSON.parse(localStorage.getItem("click_mode")) || false;
+
 		gapi.load("client:auth2", {
 			callback: async () => {
 				await gapi.client.init(apiConfig);
