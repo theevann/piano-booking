@@ -61,6 +61,7 @@ var app = new Vue({
 		is_signed_in: false,
 		is_signing_in: true,
 		is_month_loaded: false,
+		last_updated: moment(),
 		username: "",
 		click_mode: "",
 		sheet_ids: {
@@ -92,10 +93,10 @@ var app = new Vue({
 		}
 	},
 	watch: {
-		username: function() {
+		username: function () {
 			localStorage.setItem("username", this.username);
 		},
-		click_mode: function() {
+		click_mode: function () {
 			localStorage.setItem("click_mode", JSON.stringify(this.click_mode));
 		}
 	},
@@ -206,6 +207,7 @@ var app = new Vue({
 				var request = this.sheet_api.values.get(params);
 
 				request = request.then(response => {
+					this.last_updated = moment();
 					return response.result.values;
 				});
 
