@@ -19,7 +19,7 @@
 	<div id="vue-app">
 
 		<!-- LOADING SCREEN -->
-		<div v-if="is_signing_in">
+		<div v-if="is_signing_in || !is_loaded">
 			<div class="d-flex justify-content-center">
 				<div class="mt-4">Loading...</div>
 			</div>
@@ -50,8 +50,9 @@
 				<div class="row justify-content-center mt-3">
 					<p>
 						Sign-in is needed as the google sheet api requires a logged in user to update a spreadsheet.
-					<br>
-						This website is an open source project and you can check the code on <a href="https://github.com/theevann/piano-booking">github.</a>
+						<br>
+						This website is an open source project and you can check the code on <a
+							href="https://github.com/theevann/piano-booking">github.</a>
 					</p>
 				</div>
 			</div>
@@ -63,14 +64,14 @@
 			<div class="container text-center my-3">
 				<div class="row d-md-none mb-1">
 					<div class="col-6">
-						<button class="btn btn-primary btn-block" type="button" data-toggle="collapse" data-target="#collapseHelp"
-							aria-expanded="false" aria-controls="collapseHelp">
+						<button class="btn btn-primary btn-block" type="button" data-toggle="collapse"
+							data-target="#collapseHelp" aria-expanded="false" aria-controls="collapseHelp">
 							Help
 						</button>
 					</div>
 					<div class="col-6">
-						<button class="btn btn-primary btn-block" type="button" data-toggle="collapse" data-target="#collapseOptions"
-							aria-expanded="false" aria-controls="collapseOptions">
+						<button class="btn btn-primary btn-block" type="button" data-toggle="collapse"
+							data-target="#collapseOptions" aria-expanded="false" aria-controls="collapseOptions">
 							Options
 						</button>
 					</div>
@@ -83,14 +84,16 @@
 							?
 						</button>
 					</div>
+
 					<div class="col-12 col-md-10">
 						<div class="row justify-content-center">
-							<div v-for="(id, tag) in sheet_ids" class="col-6 col-md-5">
-								<button @click="change_room(tag)" class="btn btn-block btn-secondary text-uppercase"
-									:class="[sheet_tag == tag ? 'font-weight-bold' : '', sheet_tag == tag ? 'active' : '']">{{ tag }}</button>
+							<div v-for="(name, idx) in current_buttons" class="col-6 col-md-5">
+								<button @click="change_tab(idx)" class="btn btn-block btn-secondary"
+									:class="current_idx == idx ? 'font-weight-bold active' : ''">{{ name }}</button>
 							</div>
 						</div>
 					</div>
+
 					<div class="col-1 d-none d-md-block">
 						<button class="btn btn-primary" type="button" data-toggle="collapse"
 							data-target="#collapseOptions" aria-expanded="false" aria-controls="collapseOptions">
@@ -109,12 +112,12 @@
 							<div class="container">
 								<div class="row">
 									<div class="btn-group btn-group-toggle col" data-toggle="buttons">
-										<label class="btn btn-secondary" :class="[!click_mode ? 'active' : '']"
+										<label class="btn btn-secondary" :class="!click_mode ? 'active' : ''"
 											@click="click_mode = false" title="Use input fields to write in cells">
 											<input type="radio" autocomplete="off"> Input
 										</label>
 										<label class="btn btn-secondary" @click="click_mode = true"
-											:class="[click_mode ? 'active' : '']"
+											:class="click_mode ? 'active' : ''"
 											title="Use click to automatically fill cells with your name">
 											<input type="radio" autocomplete="off"> Click
 										</label>
@@ -123,10 +126,26 @@
 										<div class="input-group-prepend">
 											<span class="input-group-text">Name</span>
 										</div>
-										<input v-model="username" type="text" class="form-control"
-											placeholder="Your name" aria-label="Username">
+										<input v-model="user_name" type="text" class="form-control"
+											placeholder="Your name" aria-label="user_name"
+											@keypress.enter="collapse_options">
 									</div>
 								</div>
+								<div class="row mt-2">
+									<div class="btn-group btn-group-toggle col" data-toggle="buttons">
+										<label class="btn btn-secondary" :class="view == 0 ? 'active' : ''"
+											@click="view = 0"
+											title="Show the two day for one room">
+											<input type="radio" autocomplete="off"> Show per Room
+										</label>
+										<label class="btn btn-secondary" :class="view == 1 ? 'active' : ''"
+											@click="view = 1"
+											title="Show the two rooms for one day">
+											<input type="radio" autocomplete="off"> Show per Day
+										</label>
+									</div>
+								</div>
+
 							</div>
 
 						</div>
@@ -159,12 +178,15 @@
 							<h4>How does it works ?</h4>
 							<p>
 								The site fetches data from the two spreadsheets
-								[<a href="https://docs.google.com/spreadsheets/d/1i2pVPcG7Qm3Zxn5lSta-uR0-LXXurSZhcc8xhsoF7zA/edit">CE</a>,
-								<a href="https://docs.google.com/spreadsheets/d/1ANoEagiR88K3e0WVh0lP9sk8inODCuPya9MUNwInpk8/edit">MXD</a>].
+								[<a
+									href="https://docs.google.com/spreadsheets/d/1i2pVPcG7Qm3Zxn5lSta-uR0-LXXurSZhcc8xhsoF7zA/edit">CE</a>,
+								<a
+									href="https://docs.google.com/spreadsheets/d/1ANoEagiR88K3e0WVh0lP9sk8inODCuPya9MUNwInpk8/edit">MXD</a>].
 								<br />
 								It refreshes whenever you refocus the page or change room.
 								<br />
-								It sends updates to the spreadsheet when you hit enter or click out of an input after writing.
+								It sends updates to the spreadsheet when you hit enter or click out of an input after
+								writing.
 								<br />
 								This website uses
 								<a href="https://vuejs.org/">Vue.js</a>,
@@ -175,7 +197,8 @@
 							</p>
 							<h4>Links</h4>
 							<p>
-								<a href="http://aumc.epfl.ch/index.php/les-salles-de-musique/piano-rooms/">Official AUMC website</a>
+								<a href="http://aumc.epfl.ch/index.php/les-salles-de-musique/piano-rooms/">Official AUMC
+									website</a>
 								<br>
 								<a href="https://plan.epfl.ch/?room==CE%200%20215.2">Location Room CE 0215.2</a>
 								<br>
@@ -186,7 +209,8 @@
 							<h4>Feedback</h4>
 							<p>
 								Comments, Feedback, Suggestions welcome at
-								<a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;">&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;</a>
+								<a
+									href="&#109;&#097;&#105;&#108;&#116;&#111;:&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;">&#101;&#118;&#097;&#110;&#110;&#046;&#099;&#111;&#117;&#114;&#100;&#105;&#101;&#114;&#064;&#101;&#112;&#102;&#108;&#046;&#099;&#104;</a>
 							</p>
 						</div>
 					</div>
@@ -199,19 +223,18 @@
 				<thead>
 					<tr class="row justify-content-center border-bottom">
 						<th class="col-4">Time</th>
-						<th class="col-4">Today ({{ today.day.format("DD.MM") }})</th>
-						<th class="col-4">Tomorrow ({{ tomorrow.day.format("DD.MM") }})</th>
-						</th>
+						<th class="col-4" v-for="header in current_headers">{{ header }}</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="(time, idt) in times" class="row border-bottom justify-content-center">
+					<tr v-for="(time, idt) in current_times" class="row border-bottom justify-content-center">
 						<td class="col-4">
 							<span>{{ time }}</span>
 						</td>
-						<td :id="'day-' + day.day.date()" v-for="(day, idd) in days" class="col-4">
-							<input-span @send_changes="send_booking" :day="day" :time="time" :click_mode="click_mode"
-								:name="username"></input-span>
+						<td :class="['day-' + day_room_info.day.moment.date(), 'room-' + day_room_info.room.name]" v-for="day_room_info in current_day_room_infos"
+							class="col-4">
+							<input-span @send_changes="send_booking" :day_room="day_room_info" :time="time" :view="view"
+								:click_mode="click_mode" :name="user_name"></input-span>
 						</td>
 					</tr>
 				</tbody>
@@ -229,7 +252,7 @@
 		</div>
 	</div>
 
-	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
 	<script src="https://apis.google.com/js/api.js"></script>
 	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
