@@ -13,7 +13,7 @@ Vue.component('input-span', {
 	props: ["view", "day_room", "time", "click_mode", "name"],
 	template: `
 		<span v-if="!(time in day_room.bookings)"></span>
-		<span v-else-if="!edit_mode && day_room.bookings[time] != ''" @dblclick="to_edit_mode">{{ day_room.bookings[this.time] }}</span>
+		<span v-else-if="!edit_mode && day_room.bookings[time] != ''" @dblclick="to_edit_mode" :class="day_room.bookings[time].trim() == name.trim() ? 'font-weight-bold cell' : ''">{{ day_room.bookings[time] }}</span>
 		<button v-else-if="!edit_mode && day_room.bookings[time] == '' && click_mode" @click="send_changes_click" class="btn btn-outline-secondary cell">
 			<i class="fas fa-pen"></i>
 		</button>
@@ -290,7 +290,17 @@ var app = new Vue({
 					majorDimension: 'COLUMNS'
 				};
 
-				var response = await this.sheet_api.values.batchGet(params);
+				try {
+					var response = await this.sheet_api.values.batchGet(params);
+				} catch(e) {
+					console.error(e.result.error.message);
+					await gapi.auth.authorize({
+						'client_id': apiConfig.client_id,
+						'scope': apiConfig.scope,
+						'immediate': true
+					});
+					var response = await this.sheet_api.values.batchGet(params);
+				}
 				var bookings_group = response.result.valueRanges.map(range => (range.values && range.values[0]) || []);
 
 				for ([bookings, day_room_info] of zip(bookings_group, day_room_group)) {
