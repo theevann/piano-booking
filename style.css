@@ -37,6 +37,14 @@ button.cell {
   padding: inherit;
 }
 
+span.cell {
+  display: block;
+  margin: 0 auto;
+  background-color: #c8d8fd;
+  height: 100%;
+}
+
+
 @media screen and (max-width: 500px) {
   table .row {
     font-size: 1rem;
