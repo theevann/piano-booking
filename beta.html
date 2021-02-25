@@ -19,7 +19,7 @@
 	<div id="vue-app">
 
 		<!-- LOADING SCREEN -->
-		<div v-if="is_signing_in || !is_loaded">
+		<div v-if="is_signing_in || (is_signed_in && !is_loaded)">
 			<div class="d-flex justify-content-center">
 				<div class="mt-4">Loading...</div>
 			</div>
