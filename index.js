@@ -227,8 +227,10 @@ var app = new Vue({
 
 				let request = this.sheet_api.values.get(params);
 				let values = (await request).result.values;
+				if (values === undefined)
+					continue;
+				
 				let [idx_first_row, idx_first_col] = find_2d(values, day_repr);
-
 				if (idx_first_row < 0)
 					continue;
 
