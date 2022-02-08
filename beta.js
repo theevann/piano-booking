@@ -5,7 +5,7 @@ const apiConfig = {
 	apiKey: "AIzaSyANHzPbzsJuQt-VgRpAg-1epbFikCITWTc",
 	clientId: "658460649427-4o56l086hqt4tb3qe3t75j23o3dof0he.apps.googleusercontent.com",
 	discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-	scope: "https://www.googleapis.com/auth/spreadsheets"
+	scope: "https://www.googleapis.com/auth/drive.file"
 };
 
 
