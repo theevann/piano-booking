@@ -60,8 +60,6 @@ Vue.component('input-span', {
 var app = new Vue({
 	el: "#vue-app",
 	data: {
-		is_signed_in: false,
-		is_signing_in: true,
 		is_loaded: false,
 		last_updated: moment(),
 		count: 0,
@@ -318,45 +316,57 @@ var app = new Vue({
 			}
 		},
 		send_booking: function (value, day_room, time) {
-			if (this.is_signed_in === false) {
-				$.notify({
-					title: 'Error updating sheet:<br />',
-					message: "You are not signed in"
-				}, {
-					type: 'danger',
-					delay: 3000
-				});
-				return;
-			}
 
 			let row = day_room.sheet_info.times.indexOf(time) + day_room.sheet_info.row;
 			let col = day_room.sheet_info.col + day_room.day.moment.date() - 1;
+			const range = `${day_room.sheet_info.title}!${rowcol_to_a1(row, col)}:${rowcol_to_a1(row + 1, col)}`;
 
 			this.$set(day_room.bookings, time, value);
 
-			gapi.client.sheets.spreadsheets.values
-				.update({
-					spreadsheetId: day_room.room.sheet_id,
-					range: `${day_room.sheet_info.title}!${rowcol_to_a1(row, col)}:${rowcol_to_a1(row + 1, col)}`,
-					valueInputOption: "RAW",
-					resource: {
-						values: [
-							[value + "  "]
-						]
+			fetch(`https://n8n.courdier.org/webhook/piano-booking-updater?value=${value}&ranges=${range}&room=${day_room.room.name}`)
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Network response was not ok');
 					}
+					return response.json(); // assuming the server response is JSON
 				})
-				.then(() => { }, (reason) => {
+				.then(data => {
+					console.log(data); // handling the data received from the server
+				})
+				.catch(error => {
 					$.notify({
 						title: 'Error updating sheet:<br />',
-						message: reason.result.error.message
+						message: error
 					}, {
 						type: 'danger',
-						delay: 2000,
-						timer: 500
+						delay: 3000
 					});
-
-					this.get_bookings();
 				});
+
+
+			// gapi.client.sheets.spreadsheets.values
+			// 	.update({
+			// 		spreadsheetId: day_room.room.sheet_id,
+			// 		range: `${day_room.sheet_info.title}!${rowcol_to_a1(row, col)}:${rowcol_to_a1(row + 1, col)}`,
+			// 		valueInputOption: "RAW",
+			// 		resource: {
+			// 			values: [
+			// 				[value + "  "]
+			// 			]
+			// 		}
+			// 	})
+			// 	.then(() => { }, (reason) => {
+			// 		$.notify({
+			// 			title: 'Error updating sheet:<br />',
+			// 			message: reason.result.error.message
+			// 		}, {
+			// 			type: 'danger',
+			// 			delay: 2000,
+			// 			timer: 500
+			// 		});
+
+			// 		this.get_bookings();
+			// });
 		}
 	},
 	mounted: function () {
@@ -371,25 +381,16 @@ var app = new Vue({
 			view.headers = this[view.headers].map(el => el.name);
 		}
 
-		gapi.load("client:auth2", {
+		gapi.load('client', {
 			callback: async () => {
 				await gapi.client.init(apiConfig);
-
-				let on_auth = (is_signed_in) => {
-					this.is_signing_in = false;
-					this.is_signed_in = is_signed_in;
-					if (is_signed_in)
-						this.init();
-				};
-
-				let authInstance = gapi.auth2.getAuthInstance();
-				authInstance.isSignedIn.listen(on_auth);
-				on_auth(authInstance.isSignedIn.get());
+				this.init();
 			},
 			onerror: function () {
 				console.warn('gapi.client failed to load!');
 			},
 		});
+
 	}  // End mounted
 });
 

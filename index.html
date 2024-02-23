@@ -19,42 +19,12 @@
 	<div id="vue-app">
 
 		<!-- LOADING SCREEN -->
-		<div v-if="is_signing_in || (is_signed_in && !is_loaded)">
+		<div v-if="!is_loaded">
 			<div class="d-flex justify-content-center">
 				<div class="mt-4">Loading...</div>
 			</div>
 			<div class="d-flex justify-content-center">
 				<div class="spinner-border mt-4" role="status"></div>
-			</div>
-		</div>
-
-		<!-- SIGN IN SCREEN -->
-		<div v-cloak v-else-if="!is_signed_in">
-			<div class="container text-center my-3">
-				<div class="row justify-content-center">
-					<h1>
-						Booking Site for EPFL Piano Rooms
-					</h1>
-				</div>
-				<div class="row justify-content-center mt-4">
-					<h4>
-						Please sign in using your Google account
-					</h4>
-				</div>
-				<div class="row justify-content-center mt-3">
-					<button class="btn btn-social btn-google" onClick="gapi.auth2.getAuthInstance().signIn()">
-						<i class="fab fa-google"></i>
-						<span>Sign In</span>
-					</button>
-				</div>
-				<div class="row justify-content-center mt-3">
-					<p>
-						Sign-in is needed as the google sheet api requires a logged in user to update a spreadsheet.
-						<br>
-						This website is an open source project and you can check the code on <a
-							href="https://github.com/theevann/piano-booking">github.</a>
-					</p>
-				</div>
 			</div>
 		</div>
 
@@ -192,12 +162,13 @@
 								<a href="https://vuejs.org/">Vue.js</a>,
 								<a href="https://getbootstrap.com/">Bootstrap</a>,
 								<a href="https://jquery.com/">jQuery</a>,
-								<a href="https://momentjs.com/">moment.js</a>
+								<a href="https://momentjs.com/">moment.js</a>,
+								<a href="https://n8n.io/">n8n</a>,
 								and <a href="https://github.com/google/google-api-javascript-client">Google Api</a>.
 							</p>
 							<h4>Links</h4>
 							<p>
-								<a href="http://aumc.epfl.ch/index.php/les-salles-de-musique/piano-rooms/">Official AUMC
+								<a href="https://www.epfl.ch/campus/associations/list/aumc/fr/salles-piano/">Official AUMC
 									website</a>
 								<br>
 								<a href="https://plan.epfl.ch/?room==CE%200%20215.2">Location Room CE 0215.2</a>
@@ -252,7 +223,7 @@
 		</div>
 	</div>
 
-	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
 	<script src="https://apis.google.com/js/api.js"></script>
 	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
