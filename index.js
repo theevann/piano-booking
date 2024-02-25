@@ -264,14 +264,15 @@ var app = new Vue({
 			});
 			return;
 		},
-		get_bookings: function () {
-			this.get_bookings_of(this.current_day_room_infos);
-			this.last_updated = moment();
+		get_bookings: async function () {
+			if (await this.get_bookings_of(this.current_day_room_infos)) {
+				this.last_updated = moment();
+			}
 		},
 		get_bookings_of: async function (day_room_infos) {
 			if (!this.is_loaded) {
 				console.warn("Update not performed : App not initialised");
-				return;
+				return false;
 			}
 
 			let day_room_groups = {};
@@ -293,13 +294,24 @@ var app = new Vue({
 				try {
 					var response = await this.sheet_api.values.batchGet(params);
 				} catch(e) {
-					console.error(e.result.error.message);
-					await gapi.auth.authorize({
-						'client_id': apiConfig.client_id,
-						'scope': apiConfig.scope,
-						'immediate': true
-					});
-					var response = await this.sheet_api.values.batchGet(params);
+					if ([401, 403].includes(e.result.error.code)) {
+						await gapi.auth.authorize({
+							'client_id': apiConfig.client_id,
+							'scope': apiConfig.scope,
+							'immediate': true
+						});
+						var response = await this.sheet_api.values.batchGet(params);
+					} else {
+						console.error(e.result.error.message);
+						$.notify({
+							title: 'Error loading bookings:<br />',
+							message: e.result.error.message
+						}, {
+							type: 'danger',
+							delay: 3000
+						});
+						return false;
+					}
 				}
 				var bookings_group = response.result.valueRanges.map(range => (range.values && range.values[0]) || []);
 
@@ -314,6 +326,7 @@ var app = new Vue({
 					this.$set(day_room_info, "bookings", new_bookings);
 				}
 			}
+			return true;
 		},
 		send_booking: function (value, day_room, time) {
 
@@ -328,10 +341,10 @@ var app = new Vue({
 					if (!response.ok) {
 						throw new Error('Network response was not ok');
 					}
-					return response.json(); // assuming the server response is JSON
+					return response.json();
 				})
 				.then(data => {
-					console.log(data); // handling the data received from the server
+					console.log(data);
 				})
 				.catch(error => {
 					$.notify({
@@ -341,6 +354,8 @@ var app = new Vue({
 						type: 'danger',
 						delay: 3000
 					});
+
+					this.get_bookings();
 				});
 
 
